@@ -1,3 +1,4 @@
+from tabnanny import check
 from tqdm.auto import tqdm
 import numpy as np
 import torch
@@ -6,7 +7,7 @@ import csv
 from utils import competition_metric
 
 class Solver():
-    def __init__(self, model, optimizer, criterion,train_loader, val_loader, test_loader, scheduler, device, model_save_path, csv_path, max_epoch, early_stop):
+    def __init__(self, model, optimizer, criterion,train_loader, val_loader, test_loader, scheduler, device, model_save_path_loss, model_save_path_f1, csv_path, max_epoch, early_stop):
         self.model = model
         self.optimizer = optimizer
         self.train_loader = train_loader
@@ -17,12 +18,14 @@ class Solver():
         self.max_epoch = max_epoch
         self.early_stop = early_stop
         self.criterion = criterion
-        self.model_save_path = model_save_path
+        self.model_save_path_f1 = model_save_path_f1
+        self.model_save_path_loss = model_save_path_loss
         self.csv_path = csv_path
 
     def train(self):
         self.model.to(self.device)
         best_loss = 10000
+        best_f1 = 0
         check_early_stop = 0
 
         for epoch in range(1, self.max_epoch):
@@ -34,14 +37,25 @@ class Solver():
                 best_loss = val_loss
                 check_early_stop = 0
                 torch.save({"state_dict": self.model.module.state_dict()},
-                           self.model_save_path)
-            
+                           self.model_save_path_loss)
+            elif best_f1 < val_f1:
+                best_f1 = val_f1
+                check_early_stop = 0
+                torch.save({"state_dict": self.model.module.state_dict()},
+                           self.model_save_path_f1)
+
             if self.scheduler is not None:
                 self.scheduler.step()    
 
-            self.write_csv_last_row([epoch, train_loss, val_loss, val_f1, check_early_stop])
             print(f'Epoch [{epoch}], Train Loss : [{train_loss:.5f}] Val Loss : [{val_loss:.5f}] Val F1 Score : [{val_f1:.5f}] ES: [{check_early_stop}]')
-
+            
+            train_loss = round(train_loss, 5)
+            val_loss = round(val_loss, 5)
+            self.write_csv_last_row([epoch, train_loss, val_loss, val_f1, check_early_stop])
+            
+            if check_early_stop > self.early_stop:
+                print("EARLY STOP")
+                break
 
     def train_one_epoch(self):
         train_loss_list = []

@@ -12,17 +12,18 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 
 from utils import seed_everything, get_data
-from models.BaseModel import BaseModel
+from models.BaseModel import BaseModel, BaseModel2
 from solver import Solver
 
 CFG = {
     'IMG_SIZE':224,
     'MAX_EPOCH':1000,
-    'EARLY_STOP':10,
-    'LEARNING_RATE':3e-4,
-    'BATCH_SIZE':64,
-    'MODEL_SAVE_PATH':"/home/prml/Documents/ChanYoung/DACON/Artist Classification/saved_model/eff0.pt",
-    'CFG_PATH':"/home/prml/Documents/ChanYoung/DACON/Artist Classification/saved_model/eff0.csv",
+    'EARLY_STOP':50,
+    'LEARNING_RATE':1e-4,
+    'BATCH_SIZE':16,
+    'MODEL_SAVE_PATH_LOSS':"/home/prml/Documents/ChanYoung/DACON/Artist Classification/saved_model/eff7_loss.pt",
+    'MODEL_SAVE_PATH_F1':"/home/prml/Documents/ChanYoung/DACON/Artist Classification/saved_model/eff7_f1.pt",
+    'CFG_PATH':"/home/prml/Documents/ChanYoung/DACON/Artist Classification/saved_model/eff7.csv",
     'SEED':41
 }
 
@@ -63,12 +64,11 @@ train_loader = DataLoader(train_dataset, batch_size = CFG['BATCH_SIZE'], shuffle
 val_dataset = CustomDataset(val_img_paths, val_labels, test_transform)
 val_loader = DataLoader(val_dataset, batch_size=CFG['BATCH_SIZE'], shuffle=False, num_workers=0)
 
-model = BaseModel(num_classes=len(le.classes_))
+model = BaseModel2(num_classes=len(le.classes_))
 model = nn.DataParallel(model)
 optimizer = torch.optim.Adam(params = model.parameters(), lr = CFG["LEARNING_RATE"])
 criterion = nn.CrossEntropyLoss().to(device)
-scheduler = None
-
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.7)
 
 solver = Solver(model = model,
     optimizer=optimizer,
@@ -78,7 +78,8 @@ solver = Solver(model = model,
     test_loader=None,
     scheduler=scheduler,
     device=device,
-    model_save_path=CFG['MODEL_SAVE_PATH'],
+    model_save_path_loss=CFG['MODEL_SAVE_PATH_LOSS'],
+    model_save_path_f1=CFG['MODEL_SAVE_PATH_F1'],
     csv_path=CFG['CFG_PATH'],
     max_epoch=CFG['MAX_EPOCH'],
     early_stop=CFG['EARLY_STOP'])
