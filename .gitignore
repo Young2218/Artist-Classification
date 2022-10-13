@@ -1,0 +1,6 @@
+saved_model/
+train.csv
+test.csv
+artists_info.csv
+sample_submission.csv
+*.csv
