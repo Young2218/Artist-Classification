@@ -61,7 +61,7 @@ class Solver():
         train_loss_list = []
         self.model.train()
         for img, label in tqdm(iter(self.train_loader)):
-            img, label = img.float().to(self.device), label.to(self.device)
+            img, label = img.to(self.device), label.to(self.device)
             
             self.optimizer.zero_grad()
 
@@ -88,7 +88,7 @@ class Solver():
         
         with torch.no_grad():
             for img, label in tqdm(iter(self.val_loader)):
-                img, label = img.float().to(self.device), label.to(self.device)
+                img, label = img.to(self.device), label.to(self.device)
                 
                 model_pred = self.model(img)
                 
