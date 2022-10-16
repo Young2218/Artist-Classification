@@ -25,11 +25,11 @@ CFG = {
     'IMG_SIZE':224,
     'MAX_EPOCH':1000,
     'EARLY_STOP':50,
-    'LEARNING_RATE':1e-4,
-    'BATCH_SIZE':64,
-    'MODEL_SAVE_PATH_LOSS':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/vit_loss.pt",
-    'MODEL_SAVE_PATH_F1':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/vit_f1.pt",
-    'CFG_PATH':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/vit.csv",
+    'LEARNING_RATE':1e-3,
+    'BATCH_SIZE':16,
+    'MODEL_SAVE_PATH_LOSS':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/huge_loss.pt",
+    'MODEL_SAVE_PATH_F1':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/huge_f1.pt",
+    'CFG_PATH':"/home/prml/Documents/ChanYoung/DACON/Artist-Classification/saved_model/huge.csv",
     'SEED':41
 }
 
@@ -69,19 +69,19 @@ val_df = val_df.sort_values(by=['id'])
 train_img_paths, train_labels = get_data(train_df)
 val_img_paths, val_labels = get_data(val_df)
 
-# train_dataset = CustomDataset(train_img_paths, train_labels, train_transform)
-# train_loader = DataLoader(train_dataset, batch_size = CFG['BATCH_SIZE'], shuffle=True, num_workers=0)
-
-# val_dataset = CustomDataset(val_img_paths, val_labels, test_transform)
-# val_loader = DataLoader(val_dataset, batch_size=CFG['BATCH_SIZE'], shuffle=False, num_workers=0)
-
-# ------------------------ MODEL SET ---------------------------------------------
-feature_extractor = ViTFeatureExtractor.from_pretrained('google/vit-base-patch16-224')
-train_dataset = VitDataset(train_img_paths, train_labels, feature_extractor,train_transform)
+train_dataset = CustomDataset(train_img_paths, train_labels, train_transform)
 train_loader = DataLoader(train_dataset, batch_size = CFG['BATCH_SIZE'], shuffle=True, num_workers=0)
 
-val_dataset = VitDataset(val_img_paths, val_labels, feature_extractor,test_transform)
+val_dataset = CustomDataset(val_img_paths, val_labels, test_transform)
 val_loader = DataLoader(val_dataset, batch_size=CFG['BATCH_SIZE'], shuffle=False, num_workers=0)
+
+# ------------------------ MODEL SET ---------------------------------------------
+# feature_extractor = ViTFeatureExtractor.from_pretrained('google/vit-large-patch16-224')
+# train_dataset = VitDataset(train_img_paths, train_labels, feature_extractor,train_transform)
+# train_loader = DataLoader(train_dataset, batch_size = CFG['BATCH_SIZE'], shuffle=True, num_workers=0)
+
+# val_dataset = VitDataset(val_img_paths, val_labels, feature_extractor,test_transform)
+# val_loader = DataLoader(val_dataset, batch_size=CFG['BATCH_SIZE'], shuffle=False, num_workers=0)
 
 model = VitModel(len(le.classes_), device)
 print(model)
@@ -89,9 +89,9 @@ print(model)
 
 
 model = nn.DataParallel(model)
-optimizer = torch.optim.Adam(params = model.parameters(), lr = CFG["LEARNING_RATE"])
+optimizer = torch.optim.AdamW(model.parameters(), lr=CFG['LEARNING_RATE'])
 criterion = nn.CrossEntropyLoss().to(device)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
 
 

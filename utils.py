@@ -2,6 +2,7 @@ import random
 import os
 import torch
 import numpy as np
+import pandas as pd
 from sklearn.metrics import f1_score
 
 def seed_everything(seed):
@@ -20,3 +21,14 @@ def get_data(df, infer=False):
 
 def competition_metric(true, pred):
     return f1_score(true, pred, average="macro")
+
+def forhuggingface():
+    df = pd.read_csv("/home/prml/Documents/ChanYoung/DACON/Artist-Classification/train.csv")
+    
+    for i in range(len(df)):
+        path = df.iloc[i]['img_path'].split('/')[-1]
+        df.loc[i, 'img_path'] = path
+    df.to_csv("/home/prml/Documents/ChanYoung/DACON/Artist-Classification/forhug.csv")
+
+
+# forhuggingface()
